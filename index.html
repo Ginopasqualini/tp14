@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a36">
+  <title>Saltito — aventura de plataformas</title>
+  <style>
+    :root{color-scheme:dark;--ink:#f7f5ff;--muted:#b9c3e4;--gold:#ffdc63;--pink:#ff70a6;--panel:rgba(13,20,47,.82)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(ellipse at 50% 0%,#293c76 0%,#121a38 55%,#090e20 100%)}
+    .shell{width:min(100%,1040px)}header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}.brand{display:flex;align-items:center;gap:12px}.brand-mark{display:grid;place-items:center;width:45px;height:45px;border-radius:14px;background:linear-gradient(145deg,#ffd95e,#ff8d58);color:#32224d;font-size:25px;box-shadow:0 5px 25px #ffb84c44}.brand h1{font-size:clamp(1.25rem,3vw,1.8rem);line-height:1;margin:0;letter-spacing:-.04em}.brand p{margin:5px 0 0;color:var(--muted);font-size:.85rem}.badge{border:1px solid #ffffff25;background:#ffffff0b;border-radius:999px;padding:7px 12px;color:#dce4ff;font-size:.82rem;white-space:nowrap}
+    .game-frame{position:relative;overflow:hidden;border:1px solid #ffffff30;border-radius:20px;background:#a5eaff;box-shadow:0 22px 70px #0007}.stage{position:relative;aspect-ratio:16/9}canvas{display:block;width:100%;height:100%;touch-action:none}.hud{position:absolute;inset:14px 16px auto;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}.hud-group{display:flex;gap:8px;flex-wrap:wrap}.hud-item{padding:7px 11px;border:1px solid #ffffff36;border-radius:12px;background:var(--panel);backdrop-filter:blur(8px);font-size:.88rem;font-weight:700;text-shadow:0 2px 3px #0006}.hud-item b{color:var(--gold)}
+    .screen{position:absolute;inset:0;display:grid;place-items:center;padding:20px;background:linear-gradient(#0b143a55,#0b143a88);text-align:center}.screen[hidden]{display:none}.dialog{width:min(440px,100%);padding:clamp(20px,5vw,34px);border:1px solid #ffffff35;border-radius:22px;background:rgba(13,20,47,.92);box-shadow:0 20px 60px #0008;backdrop-filter:blur(12px)}.dialog .emoji{font-size:44px;line-height:1}.dialog h2{margin:12px 0 7px;font-size:clamp(1.5rem,5vw,2.1rem);letter-spacing:-.04em}.dialog p{margin:0 auto 20px;color:#cad3ef;max-width:34ch}.primary{border:0;border-radius:12px;padding:12px 22px;background:linear-gradient(135deg,#ffe579,#ffaf52);color:#352444;font:800 1rem system-ui;cursor:pointer;box-shadow:0 6px 20px #ffbe5740;transition:transform .15s,filter .15s}.primary:hover{transform:translateY(-2px);filter:brightness(1.08)}.primary:focus-visible,.touch button:focus-visible{outline:3px solid white;outline-offset:3px}
+    .help{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:13px 4px;color:var(--muted);font-size:.9rem}.help strong{color:#eef1ff}.touch{display:none;position:absolute;inset:auto 12px 12px;justify-content:space-between;pointer-events:none}.touch-cluster{display:flex;gap:9px}.touch button{width:55px;height:52px;border:1px solid #ffffff75;border-radius:15px;background:#111b3dbb;color:white;font-size:1.35rem;font-weight:800;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}.touch button:active{background:#ffca60;color:#332348}.touch .jump{width:70px;color:#ffdf77;font-size:.85rem}
+    @media(max-width:680px){body{padding:12px}.badge{display:none}.game-frame{border-radius:14px}.hud{inset:8px 8px auto}.hud-item{padding:5px 8px;font-size:.75rem}.touch{display:flex}.help{font-size:.8rem;justify-content:center;text-align:center;padding:10px 0}.help span:last-child{display:none}}
+    @media(max-height:560px) and (orientation:landscape){body{padding:8px}.shell{width:min(100%,900px)}header{margin-bottom:6px}.brand-mark{width:34px;height:34px}.brand p{display:none}.help{padding:5px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">★</div><div><h1>Saltito</h1><p>Una pequeña aventura de plataformas</p></div></div>
+      <span class="badge">Un juego hecho para jugar ✨</span>
+    </header>
+    <section class="game-frame" aria-label="Juego Saltito">
+      <div class="stage">
+        <canvas id="game" width="960" height="540" aria-label="Plataformas: recoge monedas y llega a la bandera"></canvas>
+        <div class="hud" aria-live="polite"><div class="hud-group"><div class="hud-item">🪙 <b id="coins">0</b></div><div class="hud-item">♥ <b id="lives">3</b></div></div><div class="hud-item">NIVEL <b>1</b></div></div>
+        <div class="screen" id="screen"><div class="dialog"><div class="emoji" id="screenEmoji">🌟</div><h2 id="screenTitle">¡A la aventura!</h2><p id="screenText">Salta entre plataformas, recoge monedas y encuentra la bandera al final del camino.</p><button class="primary" id="playButton">Jugar ahora</button></div></div>
+        <div class="touch" aria-label="Controles táctiles"><div class="touch-cluster"><button data-hold="left" aria-label="Mover a la izquierda">←</button><button data-hold="right" aria-label="Mover a la derecha">→</button></div><div class="touch-cluster"><button class="jump" data-hold="jump" aria-label="Saltar">SALTAR</button></div></div>
+      </div>
+    </section>
+    <div class="help"><span><strong>← →</strong> moverse &nbsp;·&nbsp; <strong>Espacio / ↑</strong> saltar</span><span>¡Pisa a los bichitos desde arriba y alcanza la bandera!</span></div>
+  </main>
+<script>
+(() => {
+  const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
+  const ui={coins:document.querySelector('#coins'),lives:document.querySelector('#lives'),screen:document.querySelector('#screen'),title:document.querySelector('#screenTitle'),text:document.querySelector('#screenText'),emoji:document.querySelector('#screenEmoji'),button:document.querySelector('#playButton')};
+  const W=960,H=540,worldWidth=3700,groundY=466,keys={left:false,right:false,jump:false};
+  const platforms=[{x:0,y:groundY,w:620},{x:700,y:groundY,w:520},{x:1300,y:groundY,w:500},{x:1880,y:groundY,w:600},{x:2570,y:groundY,w:510},{x:3160,y:groundY,w:540},
+    {x:250,y:380,w:130},{x:435,y:320,w:120},{x:790,y:375,w:145},{x:1000,y:305,w:135},{x:1430,y:380,w:120},{x:1600,y:315,w:145},{x:2020,y:375,w:140},{x:2240,y:305,w:125},{x:2700,y:378,w:135},{x:2910,y:315,w:140},{x:3270,y:380,w:140},{x:3460,y:315,w:130}];
+  const coinSpots=[[290,340],[475,280],[830,335],[1040,265],[1470,340],[1650,275],[2060,335],[2275,265],[2740,338],[2955,275],[3310,340],[3500,275],[570,420],[1160,420],[1760,420],[2410,420],[3030,420],[3610,420]];
+  const coins=coinSpots.map(([x,y])=>({x,y,taken:false}));
+  const enemyStarts=[{x:510,min:470,max:590},{x:890,min:760,max:1160},{x:1515,min:1390,max:1740},{x:2140,min:1960,max:2420},{x:2790,min:2650,max:3020},{x:3350,min:3200,max:3550}];
+  let player,enemies,camera=0,score=0,lives=3,state='ready',last=0;
+  function reset(){player={x:65,y:groundY-44,w:30,h:42,vx:0,vy:0,onGround:false,invuln:0,facing:1};enemies=enemyStarts.map(e=>({...e,y:groundY-30,w:34,h:30,vx:65,alive:true}));camera=0;score=0;lives=3;coins.forEach(c=>c.taken=false);updateHud()}
+  function updateHud(){ui.coins.textContent=score;ui.lives.textContent=lives}
+  function showScreen(title,text,emoji,button){ui.title.textContent=title;ui.text.textContent=text;ui.emoji.textContent=emoji;ui.button.textContent=button;ui.screen.hidden=false}
+  function start(){reset();state='playing';ui.screen.hidden=true;last=performance.now();requestAnimationFrame(loop)}
+  ui.button.addEventListener('click',start);
+  function setKey(key,value){if(key==='left'||key==='arrowleft'||key==='a')keys.left=value;if(key==='right'||key==='arrowright'||key==='d')keys.right=value;if(key==='jump'||key===' '||key==='arrowup'||key==='w'){keys.jump=value;if(value&&player?.onGround&&state==='playing'){player.vy=-570;player.onGround=false}}}
+  window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if([' ','arrowleft','arrowright','arrowup'].includes(k))e.preventDefault();if(!e.repeat)setKey(k,true);if((k==='enter'||k===' ')&&state!=='playing')start()});
+  window.addEventListener('keyup',e=>setKey(e.key.toLowerCase(),false));
+  window.addEventListener('blur',()=>Object.keys(keys).forEach(k=>keys[k]=false));
+  document.querySelectorAll('[data-hold]').forEach(btn=>{const k=btn.dataset.hold;btn.addEventListener('pointerdown',e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);setKey(k,true)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>btn.addEventListener(ev,()=>setKey(k,false)))});
+  function rects(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+  function update(dt){const p=player;const accel=keys.left===keys.right?0:(keys.left?-1:1);p.vx=accel*245;if(accel)p.facing=accel;p.x=Math.max(0,Math.min(worldWidth-p.w,p.x+p.vx*dt));p.vy=Math.min(850,p.vy+1500*dt);const oldBottom=p.y+p.h;p.y+=p.vy*dt;p.onGround=false;
+    for(const plat of platforms){if(p.x+p.w>plat.x&&p.x<plat.x+plat.w&&oldBottom<=plat.y+5&&p.y+p.h>=plat.y&&p.vy>=0){p.y=plat.y-p.h;p.vy=0;p.onGround=true}}
+    for(const c of coins){if(!c.taken&&Math.abs((p.x+p.w/2)-c.x)<22&&Math.abs((p.y+p.h/2)-c.y)<25){c.taken=true;score++;updateHud()}}
+    if(p.invuln>0)p.invuln-=dt;
+    for(const e of enemies){if(!e.alive)continue;e.x+=e.vx*dt;if(e.x<e.min||e.x+e.w>e.max)e.vx*=-1;if(rects(p,e)){if(p.vy>80&&p.y+p.h-e.y<19){e.alive=false;p.vy=-370}else if(p.invuln<=0){lives--;p.invuln=1.5;p.vy=-300;p.x=Math.max(0,p.x-p.facing*45);updateHud();if(lives<=0){state='over';showScreen('¡Fin de la partida!',`Recogiste ${score} monedas. ¡Un nuevo intento te espera!`,'💫','Intentar de nuevo')}}}}
+    if(p.y>H+100){lives--;updateHud();if(lives<=0){state='over';showScreen('¡Fin de la partida!',`Recogiste ${score} monedas. ¡Un nuevo intento te espera!`,'💫','Intentar de nuevo')}else{p.x=Math.max(30,p.x-170);p.y=groundY-p.h;p.vy=0;p.invuln=1.4}}
+    camera=Math.max(0,Math.min(worldWidth-W,p.x-W*.36));if(p.x>worldWidth-125){state='won';showScreen('¡Lo lograste!','Llegaste a la bandera con '+score+' monedas. ¡Qué gran aventura!','🏁','Jugar otra vez')}
+  }
+  function rounded(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+  function drawBackground(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#83d9ff');g.addColorStop(1,'#e3f7ff');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff9';for(let i=0;i<7;i++){const x=((i*195-camera*.18)%(W+180)+W+180)%(W+180)-70,y=72+(i%3)*57;ctx.beginPath();ctx.arc(x,y,21,0,Math.PI*2);ctx.arc(x+25,y-9,28,0,Math.PI*2);ctx.arc(x+53,y,20,0,Math.PI*2);ctx.fill()}
+    ctx.fillStyle='#87d5ad';for(let i=0;i<8;i++){const x=i*190-camera*.33;ctx.beginPath();ctx.ellipse(x+80,groundY+5,150,100,0,Math.PI,0);ctx.fill()}
+    ctx.fillStyle='#60c99a';for(let i=0;i<7;i++){const x=i*250-camera*.5;ctx.beginPath();ctx.ellipse(x+100,groundY+18,125,75,0,Math.PI,0);ctx.fill()}}
+  function drawWorld(){ctx.save();ctx.translate(-camera,0);drawBackground();
+    for(const plat of platforms){if(plat.y===groundY){ctx.fillStyle='#ba7047';ctx.fillRect(plat.x,plat.y,plat.w,H-plat.y);ctx.fillStyle='#67c756';ctx.fillRect(plat.x,plat.y,plat.w,12);ctx.fillStyle='#8c4e3e';for(let x=plat.x+12;x<plat.x+plat.w;x+=36){ctx.fillRect(x,plat.y+24,20,5);ctx.fillRect(x+12,plat.y+52,18,5)}}else{rounded(plat.x,plat.y,plat.w,20,6,'#d98952');ctx.fillStyle='#f9c66c';ctx.fillRect(plat.x+4,plat.y+3,plat.w-8,5);ctx.fillStyle='#a95d48';for(let x=plat.x+15;x<plat.x+plat.w;x+=30)ctx.fillRect(x,plat.y+11,3,7)}}
+    for(const c of coins){if(c.taken)continue;const bob=Math.sin(performance.now()/210+c.x)*3;ctx.fillStyle='#ffcb3d';ctx.beginPath();ctx.ellipse(c.x,c.y+bob,9,13,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff09a';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff2bf';ctx.fillRect(c.x-1,c.y-7+bob,2,12)}
+    // Decorative pipes
+    for(const x of [615,1220,1810,2480,3075]){ctx.fillStyle='#328f68';ctx.fillRect(x,groundY-54,52,54);ctx.fillStyle='#48b982';ctx.fillRect(x-7,groundY-63,66,13);ctx.fillStyle='#267552';ctx.fillRect(x+39,groundY-54,6,54)}
+    for(const e of enemies){if(!e.alive)continue;rounded(e.x,e.y+8,e.w,e.h-8,12,'#8a56bb');ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(e.x+11,e.y+15,5,0,7);ctx.arc(e.x+23,e.y+15,5,0,7);ctx.fill();ctx.fillStyle='#352b52';ctx.fillRect(e.x+12,e.y+14,3,6);ctx.fillRect(e.x+24,e.y+14,3,6);ctx.fillStyle='#54376f';ctx.fillRect(e.x+5,e.y+27,9,4);ctx.fillRect(e.x+20,e.y+27,9,4)}
+    // Finish flag
+    ctx.fillStyle='#644c79';ctx.fillRect(worldWidth-95,groundY-150,7,150);ctx.fillStyle='#ff668b';ctx.beginPath();ctx.moveTo(worldWidth-88,groundY-148);ctx.lineTo(worldWidth-27,groundY-128);ctx.lineTo(worldWidth-88,groundY-105);ctx.closePath();ctx.fill();ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(worldWidth-91,groundY-153,8,0,7);ctx.fill();
+    drawPlayer();ctx.restore()}
+  function drawPlayer(){const p=player;if(p.invuln>0&&Math.floor(performance.now()/100)%2===0)return;const x=p.x,y=p.y;ctx.save();if(p.facing<0){ctx.translate(x+p.w,0);ctx.scale(-1,1);ctx.translate(-x,0)}
+    // Original, colorful explorer character (drawn in Canvas)
+    rounded(x+4,y+11,24,24,8,'#ffb34e');rounded(x+3,y+2,25,15,7,'#e75b74');ctx.fillStyle='#ffe3b5';ctx.beginPath();ctx.ellipse(x+17,y+18,8,9,0,0,7);ctx.fill();ctx.fillStyle='#302b53';ctx.fillRect(x+19,y+16,3,4);ctx.fillStyle='#713b69';ctx.fillRect(x+10,y+30,9,5);ctx.fillRect(x+21,y+30,9,5);ctx.fillStyle='#a94265';ctx.fillRect(x+3,y+8,26,4);ctx.restore()}
+  function draw(){drawWorld()}
+  function loop(now){if(state!=='playing')return;const dt=Math.min((now-last)/1000,.033);last=now;update(dt);draw();if(state==='playing')requestAnimationFrame(loop)}
+  reset();draw();
+})();
+</script>
+</body>
+</html>
